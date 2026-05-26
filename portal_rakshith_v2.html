@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>RAKSHITH — Training System</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Share+Tech+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080C12;
+  --bg2: #0C1018;
+  --card: #0E1318;
+  --border: rgba(255,255,255,0.05);
+  --border-mid: rgba(255,255,255,0.08);
+  --gold: #D4A64A;
+  --gold-dim: rgba(212,166,74,0.15);
+  --gold-faint: rgba(212,166,74,0.06);
+  --orange: #FF7A1A;
+  --red: #C1272D;
+  --teal: #2E8B8B;
+  --lightning: #7FD6FF;
+  --text: #C8B898;
+  --text-hi: #EAD8B8;
+  --text-lo: #5A5040;
+  --white: #F0E8D8;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Crimson Pro', serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar { width: 2px; }
+::-webkit-scrollbar-thumb { background: rgba(212,166,74,0.3); }
+
+/* ═══ LOADER ═══ */
+#loader {
+  position: fixed; inset: 0; z-index: 9000;
+  background: #040608;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 0;
+}
+
+.ld-compass {
+  width: 80px; height: 80px;
+  position: relative; margin-bottom: 28px;
+  opacity: 0;
+  animation: ldFade 0.8s ease 0.4s forwards;
+}
+
+.ld-compass svg {
+  width: 100%; height: 100%;
+  filter: drop-shadow(0 0 16px rgba(212,166,74,0.4));
+}
+
+@keyframes ldFade { to { opacity: 1; } }
+
+.ld-name {
+  font-family: 'Cinzel', serif; font-size: 44px; font-weight: 900;
+  letter-spacing: 10px; color: var(--white); line-height: 1;
+  overflow: hidden; margin-bottom: 6px;
+}
+
+.ld-name-inner {
+  display: block;
+  animation: ldSlide 1s cubic-bezier(0.16,1,0.3,1) 0.8s both;
+}
+
+@keyframes ldSlide {
+  from { transform: translateY(110%); }
+  to { transform: translateY(0); }
+}
+
+.ld-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px; letter-spacing: 5px; color: var(--text-lo);
+  text-transform: uppercase; opacity: 0;
+  animation: ldFade 0.6s ease 1.6s forwards;
+}
+
+.ld-bar-track {
+  width: 160px; height: 1px; background: rgba(255,255,255,0.06);
+  margin-top: 28px; overflow: hidden; opacity: 0;
+  animation: ldFade 0.4s ease 1.8s forwards;
+}
+
+.ld-bar {
+  height: 100%; width: 0;
+  background: linear-gradient(90deg, var(--orange), var(--gold));
+  animation: ldBarFill 1.4s ease 2s forwards;
+}
+
+@keyframes ldBarFill { to { width: 100%; } }
+
+#loader.gone { opacity: 0; transition: opacity 0.7s ease; pointer-events: none; }
+
+/* ═══ APP ═══ */
+#app { opacity: 0; transition: opacity 0.8s ease; }
+#app.visible { opacity: 1; }
+
+/* ═══ TOPBAR ═══ */
+.topbar {
+  position: sticky; top: 0; z-index: 200;
+  background: rgba(8,12,18,0.97); backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px; height: 54px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.tb-left { display: flex; align-items: center; gap: 10px; }
+
+.tb-mark {
+  font-size: 16px;
+  filter: drop-shadow(0 0 6px rgba(212,166,74,0.5));
+}
+
+.tb-name {
+  font-family: 'Cinzel', serif; font-size: 14px; font-weight: 700;
+  letter-spacing: 4px; color: var(--white);
+}
+
+.tb-right { display: flex; align-items: center; gap: 10px; }
+
+.tb-week {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px; letter-spacing: 3px; color: var(--gold);
+}
+
+.tb-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--orange);
+  animation: dotPulse 3s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%,100% { opacity:1; box-shadow: 0 0 6px var(--orange); }
+  50% { opacity:0.4; box-shadow: none; }
+}
+
+/* ═══ NAV ═══ */
+.nav {
+  display: flex; background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 54px; z-index: 199;
+}
+
+.nb {
+  flex: 1; padding: 11px 4px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7.5px; letter-spacing: 2px;
+  color: var(--text-lo); text-transform: uppercase;
+  background: none; border: none; cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+  text-align: center;
+}
+
+.nb.active { color: var(--gold); border-bottom-color: var(--gold); }
+.nb:hover:not(.active) { color: var(--text); }
+
+/* ═══ PANELS ═══ */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ═══ HOME ═══ */
+.home-hero {
+  position: relative; padding: 32px 20px 28px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+
+/* THE ICONIC COMPASS WATERMARK */
+.hero-watermark {
+  position: absolute; right: -30px; top: 50%;
+  transform: translateY(-50%);
+  width: 220px; height: 220px; opacity: 0.04;
+  pointer-events: none;
+}
+
+.hero-watermark svg { width: 100%; height: 100%; }
+
+/* Single gold line — the only decoration in the hero */
+.hero-gold-line {
+  width: 32px; height: 1px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+  margin-bottom: 12px;
+}
+
+.hero-eye {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px; letter-spacing: 5px; color: var(--orange);
+  text-transform: uppercase; margin-bottom: 10px;
+}
+
+.hero-heading {
+  font-family: 'Cinzel', serif; font-size: 38px; font-weight: 900;
+  letter-spacing: 2px; line-height: 0.92; color: var(--white);
+  text-transform: uppercase; margin-bottom: 20px;
+}
+
+.hero-heading .gold-grad {
+  background: linear-gradient(135deg, var(--gold), #F0C870, var(--gold));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* STATS — clean, no borders competing */
+.hero-stats {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 1px;
+  background: var(--border); border: 1px solid var(--border);
+}
+
+.hs-cell {
+  background: var(--bg); padding: 14px 10px; text-align: center;
+}
+
+.hs-val {
+  font-family: 'Cinzel', serif; font-size: 28px; font-weight: 700;
+  color: var(--white); line-height: 1;
+}
+
+.hs-unit { font-size: 11px; color: var(--text-lo); font-family: 'Crimson Pro', serif; }
+
+.hs-lbl {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 6.5px; letter-spacing: 2px; color: var(--text-lo);
+  text-transform: uppercase; margin-top: 3px;
+}
+
+/* COACH NOTE — single gold accent, everything else quiet */
+.coach-note {
+  margin: 20px 20px 0;
+  border-left: 2px solid var(--gold);
+  padding: 14px 16px;
+  background: var(--gold-faint);
+}
+
+.note-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7px; letter-spacing: 4px; color: var(--gold);
+  text-transform: uppercase; margin-bottom: 8px;
+}
+
+.note-body {
+  font-size: 14px; color: var(--text); line-height: 1.8;
+  font-weight: 300; font-style: italic;
+}
+
+/* HOME SECTIONS */
+.section { padding: 20px; }
+
+.sec-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 14px;
+}
+
+.sec-title {
+  font-family: 'Cinzel', serif; font-size: 14px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--white);
+}
+
+.sec-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7.5px; letter-spacing: 2px; color: var(--text-lo);
+}
+
+/* FOCUS GRID — calmer cards */
+.focus-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 20px; }
+
+.fc {
+  background: var(--card); padding: 14px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.fc-lbl {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7px; letter-spacing: 2px; color: var(--text-lo);
+  text-transform: uppercase; margin-bottom: 5px;
+}
+
+.fc-val {
+  font-family: 'Cinzel', serif; font-size: 18px; font-weight: 700;
+  color: var(--white); letter-spacing: 1px;
+}
+
+/* PROGRESS — only the fill line is gold, everything else is quiet */
+.prog-list { display: flex; flex-direction: column; gap: 14px; }
+
+.prog-top {
+  display: flex; justify-content: space-between; margin-bottom: 6px;
+}
+
+.prog-lbl {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7.5px; letter-spacing: 2px; color: var(--text-lo);
+  text-transform: uppercase;
+}
+
+.prog-val {
+  font-family: 'Cinzel', serif; font-size: 13px;
+  color: var(--gold); letter-spacing: 1px;
+}
+
+.prog-track { height: 1px; background: rgba(255,255,255,0.06); }
+
+.prog-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--orange), var(--gold));
+  transition: width 2.2s cubic-bezier(0.16,1,0.3,1);
+  position: relative;
+}
+
+/* EMOTIONAL PEAK — arc complete animation */
+.arc-banner {
+  display: none; margin: 0 20px;
+  background: rgba(212,166,74,0.08);
+  border: 1px solid rgba(212,166,74,0.3);
+  padding: 16px; text-align: center;
+}
+
+.arc-banner.visible { display: block; animation: arcReveal 0.8s ease; }
+
+@keyframes arcReveal {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.arc-title {
+  font-family: 'Cinzel', serif; font-size: 18px; font-weight: 900;
+  letter-spacing: 4px; color: var(--gold); text-transform: uppercase;
+}
+
+.arc-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px; letter-spacing: 3px; color: var(--text-lo);
+  margin-top: 4px; text-transform: uppercase;
+}
+
+/* ═══ TRAINING ═══ */
+.training-top {
+  padding: 20px; border-bottom: 1px solid var(--border);
+}
+
+.phase-line {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px; letter-spacing: 3px; color: var(--red);
+  text-transform: uppercase; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.phase-dot { width: 4px; height: 4px; background: var(--red); border-radius: 50%; }
+
+.split-title {
+  font-family: 'Cinzel', serif; font-size: 24px; font-weight: 900;
+  letter-spacing: 2px; color: var(--white); text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.split-desc { font-size: 13px; color: var(--text-lo); font-style: italic; }
+
+/* DAY CARDS — calm, utility-first */
+.day-list { padding: 12px 20px; display: flex; flex-direction: column; gap: 6px; }
+
+.day-card {
+  background: var(--card); cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+
+.day-card:hover { background: var(--bg2); }
+
+.day-hd {
+  display: flex; align-items: center; gap: 14px; padding: 14px 16px;
+}
+
+.day-n {
+  font-family: 'Cinzel', serif; font-size: 24px; font-weight: 900;
+  color: rgba(255,255,255,0.08); line-height: 1; flex-shrink: 0;
+  transition: color 0.2s; width: 32px;
+}
+
+.day-card.open .day-n { color: var(--orange); }
+
+.day-info { flex: 1; }
+
+.day-name {
+  font-family: 'Cinzel', serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--text-hi);
+  margin-bottom: 2px;
+}
+
+.day-muscles {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7px; letter-spacing: 2px; color: var(--text-lo);
+  text-transform: uppercase;
+}
+
+.day-arr {
+  font-size: 9px; color: var(--text-lo); transition: transform 0.25s;
+}
+
+.day-card.open .day-arr { transform: rotate(90deg); color: var(--orange); }
+
+.day-body {
+  display: none; padding: 0 16px 16px;
+}
+
+.day-card.open .day-body { display: block; }
+
+/* EXERCISE TABLE — maximum utility, minimum decoration */
+.ex-tbl {
+  width: 100%; border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.ex-tbl thead tr {
+  border-bottom: 1px solid var(--border-mid);
+}
+
+.ex-tbl th {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7px; letter-spacing: 2px; color: var(--text-lo);
+  text-transform: uppercase; padding: 0 0 8px;
+  text-align: left; font-weight: 400;
+}
+
+.ex-tbl th:not(:first-child) { text-align: center; }
+
+.ex-tbl td {
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  vertical-align: middle;
+}
+
+.ex-tbl tr:last-child td { border-bottom: none; }
+
+.ex-nm { font-size: 13px; color: var(--text-hi); line-height: 1.3; }
+.ex-tip { font-size: 10px; color: var(--text-lo); font-style: italic; }
+
+.ex-num {
+  font-family: 'Cinzel', serif; font-size: 15px; font-weight: 600;
+  color: var(--white); text-align: center;
+}
+
+.ex-note { font-size: 10px; color: var(--text-lo); text-align: center; }
+
+/* CHECK BOX — simple */
+.chk {
+  width: 16px; height: 16px;
+  border: 1px solid rgba(255,255,255,0.12);
+  cursor: pointer; margin: 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+
+.chk.done { background: var(--orange); border-color: var(--orange); }
+.chk.done::after { content: '✓'; font-size: 9px; color: white; font-weight: 700; }
+
+.day-note {
+  margin-top: 12px;
+  font-size: 11.5px; color: var(--text-lo); font-style: italic;
+  line-height: 1.65; padding-left: 12px;
+  border-left: 1px solid rgba(193,39,45,0.3);
+}
+
+/* PR FLASH — emotional peak */
+.pr-flash {
+  display: none; margin-top: 10px; padding: 10px 12px;
+  background: rgba(212,166,74,0.06);
+  border-left: 2px solid var(--gold);
+  text-align: center;
+}
+
+.pr-flash.visible { display: block; animation: prFlash 0.5s ease; }
+
+@keyframes prFlash {
+  0% { background: rgba(212,166,74,0.2); }
+  100% { background: rgba(212,166,74,0.06); }
+}
+
+.pr-text {
+  font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; color: var(--gold); text-transform: uppercase;
+}
+
+/* ═══ NUTRITION ═══ */
+.macro-top {
+  padding: 20px; background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+}
+
+.macro-heading {
+  font-family: 'Cinzel', serif; font-size: 22px; font-weight: 900;
+  letter-spacing: 3px; color: var(--white); text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.macro-phase {
+  font-size: 12px; color: var(--text-lo); font-style: italic; margin-bottom: 16px;
+}
+
+/* MACRO NUMBERS — these earn the gold, nothing else in this panel does */
+.macro-grid {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 1px;
+  background: var(--border); border: 1px solid var(--border);
+}
+
+.mc {
+  background: var(--bg); padding: 14px 8px; text-align: center;
+}
+
+.mc-num {
+  font-family: 'Cinzel', serif; font-size: 26px; font-weight: 900;
+  color: var(--white); line-height: 1;
+}
+
+.mc-unit { font-size: 9px; color: var(--text-lo); }
+
+.mc-lbl {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 6.5px; letter-spacing: 2px; color: var(--text-lo);
+  text-transform: uppercase; margin-top: 3px;
+}
+
+.mc.gold .mc-num { color: var(--gold); }
+
+.meal-section { padding: 16px 20px; }
+
+/* MEAL LIST — flat and readable */
+.meal-list { display: flex; flex-direction: column; }
+
+.meal-row {
+  display: flex; align-items: baseline; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+.meal-row:last-child { border-bottom: none; }
+
+.meal-time {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px; letter-spacing: 2px; color: var(--orange);
+  width: 46px; flex-shrink: 0;
+}
+
+.meal-name { font-size: 13px; color: var(--text); flex: 1; font-weight: 300; }
+
+.meal-macros {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7.5px; letter-spacing: 1px; color: var(--text-lo);
+  white-space: nowrap;
+}
+
+.nutr-note {
+  margin: 0 20px 20px;
+  padding: 12px 14px;
+  border-left: 2px solid var(--gold);
+  background: var(--gold-faint);
+}
+
+.nutr-note-lbl {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7px; letter-spacing: 3px; color: var(--gold);
+  text-transform: uppercase; margin-bottom: 6px;
+}
+
+.nutr-note-txt {
+  font-size: 13px; color: var(--text); line-height: 1.75;
+  font-weight: 300; font-style: italic;
+}
+
+/* ═══ RECIPES ═══ */
+.recipes-header { padding: 16px 20px 0; }
+
+.recipes-list { padding: 12px 20px; display: flex; flex-direction: column; gap: 8px; }
+
+.rc {
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+
+.rc:hover { background: rgba(255,255,255,0.02); }
+.rc.open { background: var(--bg2); }
+
+.rc-hd {
+  display: flex; gap: 14px; padding: 14px 0; align-items: flex-start;
+}
+
+.rc-n {
+  font-family: 'Cinzel', serif; font-size: 28px; font-weight: 900;
+  color: rgba(255,255,255,0.06); line-height: 1; flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.rc.open .rc-n { color: var(--orange); }
+
+.rc-info { flex: 1; }
+
+.rc-name {
+  font-family: 'Cinzel', serif; font-size: 15px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase; color: var(--text-hi);
+  margin-bottom: 2px;
+}
+
+.rc-sub { font-size: 11.5px; color: var(--text-lo); font-style: italic; margin-bottom: 5px; }
+
+.rc-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+
+.rc-tag {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 6.5px; letter-spacing: 1.5px; color: var(--text-lo);
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 2px 6px; text-transform: uppercase;
+}
+
+.rc-body {
+  display: none; padding: 0 0 16px;
+}
+
+.rc.open .rc-body { display: block; }
+
+/* RECIPE MACROS — only four numbers, they can be small and clean */
+.rc-macros {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 1px; background: var(--border); margin-bottom: 14px;
+}
+
+.rm {
+  background: var(--bg); padding: 10px 6px; text-align: center;
+}
+
+.rm-val {
+  font-family: 'Cinzel', serif; font-size: 18px; font-weight: 700;
+  color: var(--white); line-height: 1;
+}
+
+.rm-lbl {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 6.5px; letter-spacing: 2px; color: var(--text-lo);
+  text-transform: uppercase;
+}
+
+.r-sec {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7px; letter-spacing: 3px; color: var(--text-lo);
+  text-transform: uppercase; margin: 10px 0 8px;
+}
+
+.ing-list { display: flex; flex-direction: column; }
+
+.ing-row {
+  display: flex; justify-content: space-between;
+  padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+  font-size: 12.5px; color: var(--text);
+}
+
+.ing-row:last-child { border-bottom: none; }
+.ing-amt { font-family: 'Share Tech Mono', monospace; font-size: 9.5px; color: var(--text-lo); }
+
+.method-list { display: flex; flex-direction: column; gap: 8px; }
+
+.ms { display: flex; gap: 10px; }
+
+.ms-n {
+  font-family: 'Cinzel', serif; font-size: 15px; font-weight: 700;
+  color: rgba(255,255,255,0.12); line-height: 1.4; flex-shrink: 0;
+}
+
+.ms-txt { font-size: 12.5px; color: var(--text-lo); line-height: 1.65; font-weight: 300; }
+
+/* ═══ CHECK-IN ═══ */
+.ci-top {
+  padding: 20px; background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+}
+
+.ci-heading {
+  font-family: 'Cinzel', serif; font-size: 22px; font-weight: 900;
+  letter-spacing: 3px; color: var(--white); text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.ci-sub { font-size: 13px; color: var(--text-lo); font-style: italic; }
+
+.ci-form { padding: 20px; }
+
+.sl-grp { margin-bottom: 24px; }
+
+.sl-top {
+  display: flex; justify-content: space-between; margin-bottom: 6px;
+  align-items: baseline;
+}
+
+.sl-lbl {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px; letter-spacing: 3px; color: var(--text-lo);
+  text-transform: uppercase;
+}
+
+.sl-val {
+  font-family: 'Cinzel', serif; font-size: 22px; font-weight: 700;
+  color: var(--white); line-height: 1;
+  transition: color 0.2s;
+}
+
+.sl-desc { font-size: 11px; color: var(--text-lo); font-style: italic; margin-bottom: 8px; }
+
+input[type="range"] {
+  -webkit-appearance: none; width: 100%; height: 1px;
+  background: rgba(255,255,255,0.08); outline: none; cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 14px; height: 14px;
+  background: var(--gold); border-radius: 0;
+  clip-path: polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+  transition: transform 0.1s;
+}
+
+input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.4); }
+
+.ci-textarea {
+  width: 100%; background: var(--card);
+  border: 1px solid var(--border-mid); color: var(--text);
+  font-family: 'Crimson Pro', serif; font-size: 14px;
+  padding: 14px; resize: none; outline: none;
+  line-height: 1.7; font-weight: 300; font-style: italic;
+  margin-bottom: 16px; transition: border-color 0.2s;
+}
+
+.ci-textarea:focus { border-color: rgba(212,166,74,0.3); }
+.ci-textarea::placeholder { color: var(--text-lo); }
+
+.sub-btn {
+  width: 100%; padding: 16px;
+  background: transparent;
+  border: 1px solid rgba(212,166,74,0.25);
+  color: var(--text-hi);
+  font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 5px;
+  text-transform: uppercase; cursor: pointer;
+  transition: all 0.25s;
+}
+
+.sub-btn:hover {
+  background: rgba(212,166,74,0.06);
+  border-color: rgba(212,166,74,0.5);
+  color: var(--white);
+}
+
+.ci-submitted {
+  display: none; padding: 20px; text-align: center;
+}
+
+.ci-submitted.visible { display: block; }
+
+.ci-submitted-title {
+  font-family: 'Cinzel', serif; font-size: 20px; font-weight: 900;
+  letter-spacing: 4px; color: var(--gold); text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.ci-submitted-sub {
+  font-size: 13px; color: var(--text-lo); font-style: italic;
+}
+
+/* SEPARATOR */
+.sep { height: 1px; background: var(--border); margin: 0 20px; }
+
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="ld-compass">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Compass outer ring -->
+      <circle cx="50" cy="50" r="46" stroke="#D4A64A" stroke-width="0.8" opacity="0.6"/>
+      <circle cx="50" cy="50" r="40" stroke="#D4A64A" stroke-width="0.4" opacity="0.3"/>
+      <!-- Cardinal marks -->
+      <line x1="50" y1="4" x2="50" y2="14" stroke="#D4A64A" stroke-width="1.2"/>
+      <line x1="50" y1="86" x2="50" y2="96" stroke="#D4A64A" stroke-width="1.2"/>
+      <line x1="4" y1="50" x2="14" y2="50" stroke="#D4A64A" stroke-width="1.2"/>
+      <line x1="86" y1="50" x2="96" y2="50" stroke="#D4A64A" stroke-width="1.2"/>
+      <!-- Diagonal marks -->
+      <line x1="17" y1="17" x2="23" y2="23" stroke="#D4A64A" stroke-width="0.6" opacity="0.4"/>
+      <line x1="83" y1="17" x2="77" y2="23" stroke="#D4A64A" stroke-width="0.6" opacity="0.4"/>
+      <line x1="17" y1="83" x2="23" y2="77" stroke="#D4A64A" stroke-width="0.6" opacity="0.4"/>
+      <line x1="83" y1="83" x2="77" y2="77" stroke="#D4A64A" stroke-width="0.6" opacity="0.4"/>
+      <!-- North needle -->
+      <polygon points="50,16 46,50 50,44 54,50" fill="#FF7A1A" opacity="0.9"/>
+      <!-- South needle -->
+      <polygon points="50,84 46,50 50,56 54,50" fill="#D4A64A" opacity="0.5"/>
+      <!-- Center -->
+      <circle cx="50" cy="50" r="4" fill="#D4A64A" opacity="0.8"/>
+      <circle cx="50" cy="50" r="2" fill="#FF7A1A"/>
+      <!-- N label -->
+      <text x="50" y="12" text-anchor="middle" font-family="serif" font-size="6" fill="#D4A64A" opacity="0.7">N</text>
+    </svg>
+  </div>
+  <div class="ld-name"><span class="ld-name-inner">RAKSHITH</span></div>
+  <div class="ld-sub">Training System · Grand Line</div>
+  <div class="ld-bar-track"><div class="ld-bar"></div></div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="tb-mark">⚓</div>
+      <div class="tb-name">RAKSHITH</div>
+    </div>
+    <div class="tb-right">
+      <div class="tb-week">WEEK 06</div>
+      <div class="tb-dot"></div>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <button class="nb active" onclick="show('home',this)">HOME</button>
+    <button class="nb" onclick="show('training',this)">TRAINING</button>
+    <button class="nb" onclick="show('nutrition',this)">NUTRITION</button>
+    <button class="nb" onclick="show('recipes',this)">RECIPES</button>
+    <button class="nb" onclick="show('checkin',this)">CHECK-IN</button>
+  </nav>
+
+  <!-- HOME -->
+  <div class="panel active" id="panel-home">
+
+    <div class="home-hero">
+      <!-- THE ICONIC CENTERPIECE: compass watermark -->
+      <div class="hero-watermark">
+        <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="100" cy="100" r="95" stroke="#D4A64A" stroke-width="1"/>
+          <circle cx="100" cy="100" r="80" stroke="#D4A64A" stroke-width="0.5"/>
+          <circle cx="100" cy="100" r="60" stroke="#D4A64A" stroke-width="0.3"/>
+          <line x1="100" y1="5" x2="100" y2="40" stroke="#D4A64A" stroke-width="2"/>
+          <line x1="100" y1="160" x2="100" y2="195" stroke="#D4A64A" stroke-width="2"/>
+          <line x1="5" y1="100" x2="40" y2="100" stroke="#D4A64A" stroke-width="2"/>
+          <line x1="160" y1="100" x2="195" y2="100" stroke="#D4A64A" stroke-width="2"/>
+          <line x1="33" y1="33" x2="47" y2="47" stroke="#D4A64A" stroke-width="1"/>
+          <line x1="167" y1="33" x2="153" y2="47" stroke="#D4A64A" stroke-width="1"/>
+          <line x1="33" y1="167" x2="47" y2="153" stroke="#D4A64A" stroke-width="1"/>
+          <line x1="167" y1="167" x2="153" y2="153" stroke="#D4A64A" stroke-width="1"/>
+          <polygon points="100,20 95,100 100,88 105,100" fill="#FF7A1A"/>
+          <polygon points="100,180 95,100 100,112 105,100" fill="#D4A64A" opacity="0.4"/>
+          <polygon points="20,100 100,95 88,100 100,105" fill="#D4A64A" opacity="0.3"/>
+          <polygon points="180,100 100,95 112,100 100,105" fill="#D4A64A" opacity="0.3"/>
+          <circle cx="100" cy="100" r="8" stroke="#D4A64A" stroke-width="1" fill="none"/>
+          <circle cx="100" cy="100" r="3" fill="#FF7A1A"/>
+          <text x="100" y="16" text-anchor="middle" font-family="serif" font-size="10" fill="#D4A64A">N</text>
+          <text x="100" y="192" text-anchor="middle" font-family="serif" font-size="10" fill="#D4A64A" opacity="0.5">S</text>
+          <text x="12" y="104" text-anchor="middle" font-family="serif" font-size="10" fill="#D4A64A" opacity="0.5">W</text>
+          <text x="190" y="104" text-anchor="middle" font-family="serif" font-size="10" fill="#D4A64A" opacity="0.5">E</text>
+        </svg>
+      </div>
+
+      <div class="hero-gold-line"></div>
+      <div class="hero-eye">Week 06 · Hypertrophy Phase II</div>
+      <div class="hero-heading">
+        TRAINING<br>
+        <span class="gold-grad">PROTOCOL</span>
+      </div>
+      <div class="hero-stats">
+        <div class="hs-cell">
+          <div class="hs-val">82<span class="hs-unit">kg</span></div>
+          <div class="hs-lbl">Weight</div>
+        </div>
+        <div class="hs-cell">
+          <div class="hs-val">5<span class="hs-unit">day</span></div>
+          <div class="hs-lbl">Split</div>
+        </div>
+        <div class="hs-cell">
+          <div class="hs-val">14<span class="hs-unit">%</span></div>
+          <div class="hs-lbl">Body Fat</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="coach-note">
+      <div class="note-label">This Week</div>
+      <div class="note-body">Volume is up across all pushing movements. Your check-in scores have been consistent — energy and sleep holding strong means we push harder. Back width is the priority this cycle. Eat your protein. Every gram counts at this stage.</div>
+    </div>
+
+    <div class="section">
+      <div class="sec-row">
+        <div class="sec-title">Focus</div>
+        <div class="sec-sub">Week 06 / 12</div>
+      </div>
+      <div class="focus-grid">
+        <div class="fc">
+          <div class="fc-lbl">Intensity</div>
+          <div class="fc-val">RPE 8–9</div>
+        </div>
+        <div class="fc">
+          <div class="fc-lbl">Priority</div>
+          <div class="fc-val">BACK WIDTH</div>
+        </div>
+        <div class="fc">
+          <div class="fc-lbl">Volume</div>
+          <div class="fc-val">+3 SETS</div>
+        </div>
+        <div class="fc">
+          <div class="fc-lbl">Protein Target</div>
+          <div class="fc-val">200<span style="font-size:11px;color:var(--text-lo)">g</span></div>
+        </div>
+      </div>
+
+      <div class="sec-row" style="margin-top:4px">
+        <div class="sec-title">Progress</div>
+        <div class="sec-sub">Phase II</div>
+      </div>
+      <div class="prog-list">
+        <div>
+          <div class="prog-top">
+            <div class="prog-lbl">Programme</div>
+            <div class="prog-val">50%</div>
+          </div>
+          <div class="prog-track"><div class="prog-fill" style="width:50%"></div></div>
+        </div>
+        <div>
+          <div class="prog-top">
+            <div class="prog-lbl">Shoulder Width</div>
+            <div class="prog-val">+3.2cm</div>
+          </div>
+          <div class="prog-track"><div class="prog-fill" style="width:64%;background:linear-gradient(90deg,var(--teal),var(--lightning))"></div></div>
+        </div>
+        <div>
+          <div class="prog-top">
+            <div class="prog-lbl">Check-in Streak</div>
+            <div class="prog-val">6 Weeks</div>
+          </div>
+          <div class="prog-track"><div class="prog-fill" style="width:50%"></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TRAINING -->
+  <div class="panel" id="panel-training">
+
+    <div class="training-top">
+      <div class="phase-line">
+        <div class="phase-dot"></div>
+        Phase II · Power Hypertrophy · Weeks 5–8
+      </div>
+      <div class="split-title">5-Day Split</div>
+      <div class="split-desc">Push · Pull · Legs · Shoulders · Arms — 75–90 min</div>
+    </div>
+
+    <div class="day-list">
+
+      <div class="day-card" onclick="toggleDay(this)">
+        <div class="day-hd">
+          <div class="day-n">01</div>
+          <div class="day-info">
+            <div class="day-name">Push — Chest & Triceps</div>
+            <div class="day-muscles">Chest · Front Delts · Triceps</div>
+          </div>
+          <div class="day-arr">▶</div>
+        </div>
+        <div class="day-body">
+          <table class="ex-tbl">
+            <thead><tr><th style="width:42%">Exercise</th><th>Sets</th><th>Reps</th><th>Rest</th><th>✓</th></tr></thead>
+            <tbody>
+              <tr><td><div class="ex-nm">Incline Barbell Press</div><div class="ex-tip">Main strength movement</div></td><td><div class="ex-num">5</div></td><td><div class="ex-num">5</div></td><td><div class="ex-note">4 min</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+              <tr><td><div class="ex-nm">Flat DB Press</div><div class="ex-tip">Full stretch at bottom</div></td><td><div class="ex-num">4</div></td><td><div class="ex-num">8–10</div></td><td><div class="ex-note">2 min</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+              <tr><td><div class="ex-nm">Cable Fly High–Low</div><div class="ex-tip">Squeeze at peak</div></td><td><div class="ex-num">4</div></td><td><div class="ex-num">12–15</div></td><td><div class="ex-note">90s</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+              <tr><td><div class="ex-nm">Overhead Tricep Extension</div><div class="ex-tip">Long head emphasis</div></td><td><div class="ex-num">4</div></td><td><div class="ex-num">10–12</div></td><td><div class="ex-note">90s</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+              <tr><td><div class="ex-nm">Tricep Pushdown V-Bar</div><div class="ex-tip">Elbows fixed</div></td><td><div class="ex-num">3</div></td><td><div class="ex-num">15–20</div></td><td><div class="ex-note">60s</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+            </tbody>
+          </table>
+          <div class="pr-flash" id="pr-push"><div class="pr-text">⚡ All Sets Complete</div></div>
+          <div class="day-note">Hit the incline press weight before the volume. If technique breaks, drop 5kg and keep reps clean.</div>
+        </div>
+      </div>
+
+      <div class="day-card" onclick="toggleDay(this)">
+        <div class="day-hd">
+          <div class="day-n">02</div>
+          <div class="day-info">
+            <div class="day-name">Pull — Back & Biceps</div>
+            <div class="day-muscles">Lats · Rhomboids · Rear Delts · Biceps</div>
+          </div>
+          <div class="day-arr">▶</div>
+        </div>
+        <div class="day-body">
+          <table class="ex-tbl">
+            <thead><tr><th style="width:42%">Exercise</th><th>Sets</th><th>Reps</th><th>Rest</th><th>✓</th></tr></thead>
+            <tbody>
+              <tr><td><div class="ex-nm">Weighted Pull-Up Wide</div><div class="ex-tip">Full dead hang each rep</div></td><td><div class="ex-num">5</div></td><td><div class="ex-num">5–6</div></td><td><div class="ex-note">4 min</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+              <tr><td><div class="ex-nm">Pendlay Row</div><div class="ex-tip">Dead stop off floor</div></td><td><div class="ex-num">4</div></td><td><div class="ex-num">6–8</div></td><td><div class="ex-note">3 min</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+              <tr><td><div class="ex-nm">Single Arm Cable Row</div><div class="ex-tip">Full rotation, feel the lat</div></td><td><div class="ex-num">4</div></td><td><div class="ex-num">10–12</div></td><td><div class="ex-note">90s</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+              <tr><td><div class="ex-nm">Incline DB Curl</div><div class="ex-tip">No swinging</div></td><td><div class="ex-num">4</div></td><td><div class="ex-num">10–12</div></td><td><div class="ex-note">90s</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+              <tr><td><div class="ex-nm">Rear Delt Cable Fly</div><div class="ex-tip">High rep, controlled</div></td><td><div class="ex-num">4</div></td><td><div class="ex-num">15–20</div></td><td><div class="ex-note">60s</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+            </tbody>
+          </table>
+          <div class="pr-flash" id="pr-pull"><div class="pr-text">⚡ All Sets Complete</div></div>
+          <div class="day-note">Initiate every pull with the lat, not the elbow. Visualise shoulder blades spreading on the way up.</div>
+        </div>
+      </div>
+
+      <div class="day-card" onclick="toggleDay(this)">
+        <div class="day-hd">
+          <div class="day-n">03</div>
+          <div class="day-info">
+            <div class="day-name">Legs — Full Lower</div>
+            <div class="day-muscles">Quads · Hamstrings · Glutes · Calves</div>
+          </div>
+          <div class="day-arr">▶</div>
+        </div>
+        <div class="day-body">
+          <table class="ex-tbl">
+            <thead><tr><th style="width:42%">Exercise</th><th>Sets</th><th>Reps</th><th>Rest</th><th>✓</th></tr></thead>
+            <tbody>
+              <tr><td><div class="ex-nm">Back Squat</div><div class="ex-tip">1 second pause at bottom</div></td><td><div class="ex-num">5</div></td><td><div class="ex-num">5</div></td><td><div class="ex-note">4 min</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+              <tr><td><div class="ex-nm">Romanian Deadlift</div><div class="ex-tip">Hinge from the hip</div></td><td><div class="ex-num">4</div></td><td><div class="ex-num">8–10</div></td><td><div class="ex-note">2 min</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+              <tr><td><div class="ex-nm">Leg Press</div><div class="ex-tip">Full range, no lockout</div></td><td><div class="ex-num">4</div></td><td><div class="ex-num">10–12</div></td><td><div class="ex-note">2 min</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+              <tr><td><div class="ex-nm">Walking Lunges</div><div class="ex-tip">Control the descent</div></td><td><div class="ex-num">3</div></td><td><div class="ex-num">12 each</div></td><td><div class="ex-note">90s</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+              <tr><td><div class="ex-nm">Seated Calf Raise</div><div class="ex-tip">Full stretch at bottom</div></td><td><div class="ex-num">5</div></td><td><div class="ex-num">15–20</div></td><td><div class="ex-note">60s</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+            </tbody>
+          </table>
+          <div class="pr-flash" id="pr-legs"><div class="pr-text">⚡ All Sets Complete</div></div>
+          <div class="day-note">Nobody with lagging legs looks complete. Give this session the same focus as push day.</div>
+        </div>
+      </div>
+
+      <div class="day-card" onclick="toggleDay(this)">
+        <div class="day-hd">
+          <div class="day-n">04</div>
+          <div class="day-info">
+            <div class="day-name">Shoulders — Width</div>
+            <div class="day-muscles">Front · Lateral · Rear Delts · Traps</div>
+          </div>
+          <div class="day-arr">▶</div>
+        </div>
+        <div class="day-body">
+          <table class="ex-tbl">
+            <thead><tr><th style="width:42%">Exercise</th><th>Sets</th><th>Reps</th><th>Rest</th><th>✓</th></tr></thead>
+            <tbody>
+              <tr><td><div class="ex-nm">Seated DB Press</div><div class="ex-tip">Controlled descent</div></td><td><div class="ex-num">5</div></td><td><div class="ex-num">6–8</div></td><td><div class="ex-note">3 min</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+              <tr><td><div class="ex-nm">Cable Lateral Raise</div><div class="ex-tip">3 sec eccentric</div></td><td><div class="ex-num">5</div></td><td><div class="ex-num">12–15</div></td><td><div class="ex-note">90s</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+              <tr><td><div class="ex-nm">DB Lateral Drop Set</div><div class="ex-tip">Drop weight twice</div></td><td><div class="ex-num">3</div></td><td><div class="ex-num">10+8+8</div></td><td><div class="ex-note">2 min</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+              <tr><td><div class="ex-nm">Face Pull</div><div class="ex-tip">External rotation at peak</div></td><td><div class="ex-num">4</div></td><td><div class="ex-num">15–20</div></td><td><div class="ex-note">60s</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+              <tr><td><div class="ex-nm">Barbell Shrug</div><div class="ex-tip">Hold at top 2 sec</div></td><td><div class="ex-num">4</div></td><td><div class="ex-num">12–15</div></td><td><div class="ex-note">90s</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+            </tbody>
+          </table>
+          <div class="pr-flash" id="pr-shoulders"><div class="pr-text">⚡ All Sets Complete</div></div>
+          <div class="day-note">Lateral raises are the most important exercise in your programme right now. Do not rush them.</div>
+        </div>
+      </div>
+
+      <div class="day-card" onclick="toggleDay(this)">
+        <div class="day-hd">
+          <div class="day-n">05</div>
+          <div class="day-info">
+            <div class="day-name">Arms — Full Isolation</div>
+            <div class="day-muscles">Biceps · Triceps · Forearms</div>
+          </div>
+          <div class="day-arr">▶</div>
+        </div>
+        <div class="day-body">
+          <table class="ex-tbl">
+            <thead><tr><th style="width:42%">Exercise</th><th>Sets</th><th>Reps</th><th>Rest</th><th>✓</th></tr></thead>
+            <tbody>
+              <tr><td><div class="ex-nm">EZ Bar Curl</div><div class="ex-tip">Full supination at top</div></td><td><div class="ex-num">4</div></td><td><div class="ex-num">8–10</div></td><td><div class="ex-note">2 min</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+              <tr><td><div class="ex-nm">Cable Overhead Extension</div><div class="ex-tip">Long head stretch</div></td><td><div class="ex-num">4</div></td><td><div class="ex-num">10–12</div></td><td><div class="ex-note">90s</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+              <tr><td><div class="ex-nm">Hammer Curl</div><div class="ex-tip">Brachialis focus</div></td><td><div class="ex-num">3</div></td><td><div class="ex-num">12–15</div></td><td><div class="ex-note">90s</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+              <tr><td><div class="ex-nm">Rope Pushdown</div><div class="ex-tip">Spread rope at bottom</div></td><td><div class="ex-num">4</div></td><td><div class="ex-num">12–15</div></td><td><div class="ex-note">90s</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+              <tr><td><div class="ex-nm">Reverse Curl</div><div class="ex-tip">Forearm thickness</div></td><td><div class="ex-num">3</div></td><td><div class="ex-num">15</div></td><td><div class="ex-note">60s</div></td><td><div class="chk" onclick="chk(event,this)"></div></td></tr>
+            </tbody>
+          </table>
+          <div class="pr-flash" id="pr-arms"><div class="pr-text">⚡ All Sets Complete</div></div>
+          <div class="day-note">Arms day only works if you are not already fried from the week. This is why the split is ordered as it is.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- NUTRITION -->
+  <div class="panel" id="panel-nutrition">
+
+    <div class="macro-top">
+      <div class="macro-heading">Nutrition</div>
+      <div class="macro-phase">Lean bulk · Week 6 · Updated from last check-in</div>
+      <div class="macro-grid">
+        <div class="mc"><div class="mc-num">2940</div><div class="mc-unit">kcal</div><div class="mc-lbl">Calories</div></div>
+        <div class="mc gold"><div class="mc-num">200</div><div class="mc-unit">g</div><div class="mc-lbl">Protein</div></div>
+        <div class="mc"><div class="mc-num">340</div><div class="mc-unit">g</div><div class="mc-lbl">Carbs</div></div>
+        <div class="mc"><div class="mc-num">82</div><div class="mc-unit">g</div><div class="mc-lbl">Fat</div></div>
+      </div>
+    </div>
+
+    <div class="meal-section">
+      <div class="sec-row"><div class="sec-title">Meal Timing</div><div class="sec-sub">5 Meals</div></div>
+      <div class="meal-list">
+        <div class="meal-row"><div class="meal-time">07:00</div><div class="meal-name">Egg whites · oats · banana</div><div class="meal-macros">680 kcal · 48P</div></div>
+        <div class="meal-row"><div class="meal-time">10:30</div><div class="meal-name">Greek yoghurt · whey · fruit</div><div class="meal-macros">420 kcal · 46P</div></div>
+        <div class="meal-row"><div class="meal-time">13:30</div><div class="meal-name">Chicken · rice · dal</div><div class="meal-macros">740 kcal · 52P</div></div>
+        <div class="meal-row"><div class="meal-time">17:00</div><div class="meal-name">Rice · paneer · vegetables</div><div class="meal-macros">560 kcal · 32P</div></div>
+        <div class="meal-row"><div class="meal-time">20:30</div><div class="meal-name">Chicken · sweet potato · greens</div><div class="meal-macros">540 kcal · 48P</div></div>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="nutr-note" style="margin-top:20px">
+      <div class="nutr-note-lbl">This Week's Adjustment</div>
+      <div class="nutr-note-txt">Calories up 100 from last week — your energy scores have been strong enough to support the extra load. Protein stays at 200g minimum. Do not skip the pre-workout meal. That is where most of your training fuel comes from.</div>
+    </div>
+
+  </div>
+
+  <!-- RECIPES -->
+  <div class="panel" id="panel-recipes">
+    <div class="recipes-header">
+      <div class="sec-row" style="margin-bottom:0;padding-bottom:12px;border-bottom:1px solid var(--border)">
+        <div class="sec-title">Recipes</div>
+        <div class="sec-sub">6 Personal</div>
+      </div>
+    </div>
+    <div class="recipes-list">
+
+      <div class="rc" onclick="toggleRc(this)">
+        <div class="rc-hd">
+          <div class="rc-n">01</div>
+          <div class="rc-info">
+            <div class="rc-name">Masala Chicken Rice Bowl</div>
+            <div class="rc-sub">High protein · Desi classic rebuilt</div>
+            <div class="rc-tags"><div class="rc-tag">POST-WORKOUT</div><div class="rc-tag">25 MIN</div></div>
+          </div>
+        </div>
+        <div class="rc-body">
+          <div class="rc-macros"><div class="rm"><div class="rm-val">720</div><div class="rm-lbl">kcal</div></div><div class="rm"><div class="rm-val">58</div><div class="rm-lbl">protein</div></div><div class="rm"><div class="rm-val">82</div><div class="rm-lbl">carbs</div></div><div class="rm"><div class="rm-val">14</div><div class="rm-lbl">fat</div></div></div>
+          <div class="r-sec">Ingredients</div>
+          <div class="ing-list">
+            <div class="ing-row"><span>Chicken breast</span><span class="ing-amt">220g</span></div>
+            <div class="ing-row"><span>Basmati rice, cooked</span><span class="ing-amt">200g</span></div>
+            <div class="ing-row"><span>Onion, diced</span><span class="ing-amt">1 medium</span></div>
+            <div class="ing-row"><span>Tomatoes, chopped</span><span class="ing-amt">2</span></div>
+            <div class="ing-row"><span>Garam masala</span><span class="ing-amt">1 tsp</span></div>
+            <div class="ing-row"><span>Ginger-garlic paste</span><span class="ing-amt">1 tbsp</span></div>
+            <div class="ing-row"><span>Greek yoghurt</span><span class="ing-amt">2 tbsp</span></div>
+            <div class="ing-row"><span>Cumin seeds, turmeric, oil</span><span class="ing-amt">½ tsp each</span></div>
+          </div>
+          <div class="r-sec">Method</div>
+          <div class="method-list">
+            <div class="ms"><div class="ms-n">1</div><div class="ms-txt">Marinate chicken in yoghurt, garam masala, turmeric, and ginger-garlic paste for 20 minutes.</div></div>
+            <div class="ms"><div class="ms-n">2</div><div class="ms-txt">Bloom cumin in oil, cook onion until golden. Add tomatoes and cook down 5 minutes.</div></div>
+            <div class="ms"><div class="ms-n">3</div><div class="ms-txt">Add chicken, cook 8–10 minutes on medium until cooked through. Serve over basmati.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rc" onclick="toggleRc(this)">
+        <div class="rc-hd">
+          <div class="rc-n">02</div>
+          <div class="rc-info">
+            <div class="rc-name">Paneer Power Bowl</div>
+            <div class="rc-sub">Vegetarian · Full protein hit</div>
+            <div class="rc-tags"><div class="rc-tag">LUNCH</div><div class="rc-tag">VEGETARIAN</div><div class="rc-tag">20 MIN</div></div>
+          </div>
+        </div>
+        <div class="rc-body">
+          <div class="rc-macros"><div class="rm"><div class="rm-val">640</div><div class="rm-lbl">kcal</div></div><div class="rm"><div class="rm-val">44</div><div class="rm-lbl">protein</div></div><div class="rm"><div class="rm-val">68</div><div class="rm-lbl">carbs</div></div><div class="rm"><div class="rm-val">20</div><div class="rm-lbl">fat</div></div></div>
+          <div class="r-sec">Ingredients</div>
+          <div class="ing-list">
+            <div class="ing-row"><span>Paneer, cubed</span><span class="ing-amt">200g</span></div>
+            <div class="ing-row"><span>Brown rice, cooked</span><span class="ing-amt">180g</span></div>
+            <div class="ing-row"><span>Bell peppers, sliced</span><span class="ing-amt">2</span></div>
+            <div class="ing-row"><span>Spinach</span><span class="ing-amt">80g</span></div>
+            <div class="ing-row"><span>Chaat masala, olive oil, lemon</span><span class="ing-amt">1 tsp / 1 tsp / 1 tbsp</span></div>
+          </div>
+          <div class="r-sec">Method</div>
+          <div class="method-list">
+            <div class="ms"><div class="ms-n">1</div><div class="ms-txt">Pan-fry paneer in a dry non-stick pan until golden on all sides. Remove and set aside.</div></div>
+            <div class="ms"><div class="ms-n">2</div><div class="ms-txt">Sauté peppers in olive oil 3–4 minutes. Add spinach and wilt. Season with chaat masala.</div></div>
+            <div class="ms"><div class="ms-n">3</div><div class="ms-txt">Bowl: rice base, veggies, paneer on top. Squeeze lemon over everything.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rc" onclick="toggleRc(this)">
+        <div class="rc-hd">
+          <div class="rc-n">03</div>
+          <div class="rc-info">
+            <div class="rc-name">Egg White Dal Chilla</div>
+            <div class="rc-sub">Breakfast · Massive protein hit</div>
+            <div class="rc-tags"><div class="rc-tag">BREAKFAST</div><div class="rc-tag">15 MIN</div></div>
+          </div>
+        </div>
+        <div class="rc-body">
+          <div class="rc-macros"><div class="rm"><div class="rm-val">480</div><div class="rm-lbl">kcal</div></div><div class="rm"><div class="rm-val">52</div><div class="rm-lbl">protein</div></div><div class="rm"><div class="rm-val">44</div><div class="rm-lbl">carbs</div></div><div class="rm"><div class="rm-val">8</div><div class="rm-lbl">fat</div></div></div>
+          <div class="r-sec">Ingredients</div>
+          <div class="ing-list">
+            <div class="ing-row"><span>Egg whites</span><span class="ing-amt">8</span></div>
+            <div class="ing-row"><span>Moong dal flour (besan)</span><span class="ing-amt">60g</span></div>
+            <div class="ing-row"><span>Onion, finely chopped</span><span class="ing-amt">½</span></div>
+            <div class="ing-row"><span>Green chilli, cumin, coriander</span><span class="ing-amt">to taste</span></div>
+          </div>
+          <div class="r-sec">Method</div>
+          <div class="method-list">
+            <div class="ms"><div class="ms-n">1</div><div class="ms-txt">Whisk egg whites and besan until smooth batter. Add onion and spices.</div></div>
+            <div class="ms"><div class="ms-n">2</div><div class="ms-txt">Pour onto hot non-stick pan. Cook like a thick pancake, 2–3 min each side until set.</div></div>
+            <div class="ms"><div class="ms-n">3</div><div class="ms-txt">Serve with low-fat yoghurt or green chutney. Makes 2–3 chillas.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rc" onclick="toggleRc(this)">
+        <div class="rc-hd">
+          <div class="rc-n">04</div>
+          <div class="rc-info">
+            <div class="rc-name">Tuna Lemon Rice</div>
+            <div class="rc-sub">Prep-friendly · 10 minutes flat</div>
+            <div class="rc-tags"><div class="rc-tag">PREP AHEAD</div><div class="rc-tag">10 MIN</div></div>
+          </div>
+        </div>
+        <div class="rc-body">
+          <div class="rc-macros"><div class="rm"><div class="rm-val">580</div><div class="rm-lbl">kcal</div></div><div class="rm"><div class="rm-val">54</div><div class="rm-lbl">protein</div></div><div class="rm"><div class="rm-val">68</div><div class="rm-lbl">carbs</div></div><div class="rm"><div class="rm-val">8</div><div class="rm-lbl">fat</div></div></div>
+          <div class="r-sec">Ingredients</div>
+          <div class="ing-list">
+            <div class="ing-row"><span>Tinned tuna in water</span><span class="ing-amt">2 cans</span></div>
+            <div class="ing-row"><span>White rice, cooked</span><span class="ing-amt">200g</span></div>
+            <div class="ing-row"><span>Lemon juice, olive oil</span><span class="ing-amt">2 tbsp / 1 tsp</span></div>
+            <div class="ing-row"><span>Cucumber, coriander</span><span class="ing-amt">½ / handful</span></div>
+          </div>
+          <div class="r-sec">Method</div>
+          <div class="method-list">
+            <div class="ms"><div class="ms-n">1</div><div class="ms-txt">Drain tuna. Flake into bowl with rice.</div></div>
+            <div class="ms"><div class="ms-n">2</div><div class="ms-txt">Add lemon, olive oil, seasoning. Mix. Add cucumber and coriander.</div></div>
+            <div class="ms"><div class="ms-n">3</div><div class="ms-txt">Eat cold or warm. Keeps 3 days in fridge.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rc" onclick="toggleRc(this)">
+        <div class="rc-hd">
+          <div class="rc-n">05</div>
+          <div class="rc-info">
+            <div class="rc-name">Chicken Dal Soup</div>
+            <div class="rc-sub">Recovery · High volume, lower calorie</div>
+            <div class="rc-tags"><div class="rc-tag">DINNER</div><div class="rc-tag">BATCH COOK</div><div class="rc-tag">30 MIN</div></div>
+          </div>
+        </div>
+        <div class="rc-body">
+          <div class="rc-macros"><div class="rm"><div class="rm-val">520</div><div class="rm-lbl">kcal</div></div><div class="rm"><div class="rm-val">56</div><div class="rm-lbl">protein</div></div><div class="rm"><div class="rm-val">44</div><div class="rm-lbl">carbs</div></div><div class="rm"><div class="rm-val">10</div><div class="rm-lbl">fat</div></div></div>
+          <div class="r-sec">Ingredients</div>
+          <div class="ing-list">
+            <div class="ing-row"><span>Chicken breast, cubed</span><span class="ing-amt">200g</span></div>
+            <div class="ing-row"><span>Red lentils (masoor dal)</span><span class="ing-amt">80g</span></div>
+            <div class="ing-row"><span>Onion, tomatoes, spinach</span><span class="ing-amt">1 / 2 / 60g</span></div>
+            <div class="ing-row"><span>Ginger-garlic, turmeric, cumin</span><span class="ing-amt">1 tbsp / ½ tsp each</span></div>
+            <div class="ing-row"><span>Water or stock</span><span class="ing-amt">600ml</span></div>
+          </div>
+          <div class="r-sec">Method</div>
+          <div class="method-list">
+            <div class="ms"><div class="ms-n">1</div><div class="ms-txt">Sauté onion and ginger-garlic. Add spices and tomatoes, cook 3 minutes.</div></div>
+            <div class="ms"><div class="ms-n">2</div><div class="ms-txt">Add chicken, lentils, water. Simmer 20 minutes until lentils are soft.</div></div>
+            <div class="ms"><div class="ms-n">3</div><div class="ms-txt">Stir in spinach, cook 2 more minutes. Batch cook — keeps 4 days.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rc" onclick="toggleRc(this)">
+        <div class="rc-hd">
+          <div class="rc-n">06</div>
+          <div class="rc-info">
+            <div class="rc-name">Overnight Oats — Mango Whey</div>
+            <div class="rc-sub">5 minutes prep · Ready in the morning</div>
+            <div class="rc-tags"><div class="rc-tag">BREAKFAST</div><div class="rc-tag">5 MIN</div></div>
+          </div>
+        </div>
+        <div class="rc-body">
+          <div class="rc-macros"><div class="rm"><div class="rm-val">520</div><div class="rm-lbl">kcal</div></div><div class="rm"><div class="rm-val">42</div><div class="rm-lbl">protein</div></div><div class="rm"><div class="rm-val">62</div><div class="rm-lbl">carbs</div></div><div class="rm"><div class="rm-val">10</div><div class="rm-lbl">fat</div></div></div>
+          <div class="r-sec">Ingredients</div>
+          <div class="ing-list">
+            <div class="ing-row"><span>Rolled oats</span><span class="ing-amt">90g</span></div>
+            <div class="ing-row"><span>Whey protein, vanilla or mango</span><span class="ing-amt">35g</span></div>
+            <div class="ing-row"><span>Low-fat milk</span><span class="ing-amt">220ml</span></div>
+            <div class="ing-row"><span>Greek yoghurt</span><span class="ing-amt">100g</span></div>
+            <div class="ing-row"><span>Mango, chia seeds, honey</span><span class="ing-amt">½ / 1 tbsp / 1 tsp</span></div>
+          </div>
+          <div class="r-sec">Method</div>
+          <div class="method-list">
+            <div class="ms"><div class="ms-n">1</div><div class="ms-txt">Mix oats, protein, chia seeds, milk, yoghurt in a jar. Stir well.</div></div>
+            <div class="ms"><div class="ms-n">2</div><div class="ms-txt">Refrigerate overnight. Top with mango and honey in the morning.</div></div>
+            <div class="ms"><div class="ms-n">3</div><div class="ms-txt">Keeps 3 days in fridge. Add splash of milk in the morning if too thick.</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CHECK-IN -->
+  <div class="panel" id="panel-checkin">
+
+    <div class="ci-top">
+      <div class="ci-heading">Weekly Check-In</div>
+      <div class="ci-sub">Submit every Sunday — this drives the adaptation. Takes 3 minutes.</div>
+    </div>
+
+    <div id="ci-form-wrap">
+      <div class="ci-form">
+
+        <div class="sl-grp">
+          <div class="sl-top"><div class="sl-lbl">Training Quality</div><div class="sl-val" id="v1">8</div></div>
+          <div class="sl-desc">How were your sessions this week overall?</div>
+          <input type="range" min="1" max="10" value="8" oninput="updateSlider('v1',this.value)">
+        </div>
+
+        <div class="sl-grp">
+          <div class="sl-top"><div class="sl-lbl">Nutrition Adherence</div><div class="sl-val" id="v2">7</div></div>
+          <div class="sl-desc">Did you hit your calorie and protein targets?</div>
+          <input type="range" min="1" max="10" value="7" oninput="updateSlider('v2',this.value)">
+        </div>
+
+        <div class="sl-grp">
+          <div class="sl-top"><div class="sl-lbl">Sleep Quality</div><div class="sl-val" id="v3">7</div></div>
+          <div class="sl-desc">Average quality across the week</div>
+          <input type="range" min="1" max="10" value="7" oninput="updateSlider('v3',this.value)">
+        </div>
+
+        <div class="sl-grp">
+          <div class="sl-top"><div class="sl-lbl">Energy Level</div><div class="sl-val" id="v4">8</div></div>
+          <div class="sl-desc">Day-to-day energy throughout the week</div>
+          <input type="range" min="1" max="10" value="8" oninput="updateSlider('v4',this.value)">
+        </div>
+
+        <div class="sl-grp">
+          <div class="sl-top"><div class="sl-lbl">Current Weight</div><div class="sl-val" id="v5">82<span style="font-size:13px;color:var(--text-lo)">kg</span></div></div>
+          <div class="sl-desc">Weigh yourself first thing in the morning</div>
+          <input type="range" min="60" max="120" value="82" oninput="document.getElementById('v5').innerHTML=this.value+'<span style=font-size:13px;color:var(--text-lo)>kg</span>'">
+        </div>
+
+        <div class="sl-grp">
+          <div class="sl-top"><div class="sl-lbl">Stress Level</div><div class="sl-val" id="v6">4</div></div>
+          <div class="sl-desc">1 = calm · 10 = extremely stressed</div>
+          <input type="range" min="1" max="10" value="4" oninput="updateSlider('v6',this.value)">
+        </div>
+
+        <textarea class="ci-textarea" rows="4" placeholder="Anything to add — PRs hit, injuries, what felt good, what was hard, anything different this week..."></textarea>
+
+        <button class="sub-btn" onclick="submitCI()">Submit Check-In</button>
+      </div>
+    </div>
+
+    <div class="ci-submitted" id="ci-done">
+      <div style="font-size:32px;margin-bottom:12px">⚓</div>
+      <div class="ci-submitted-title">Check-In Received</div>
+      <div class="ci-submitted-sub">I'll read this tonight and update your programme.<br>See you next week.</div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+// LOADER
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('loader').classList.add('gone');
+    setTimeout(() => {
+      document.getElementById('loader').style.display = 'none';
+      const app = document.getElementById('app');
+      app.classList.add('visible');
+      // Animate progress bars after reveal
+      setTimeout(animateBars, 400);
+    }, 700);
+  }, 3800);
+});
+
+// NAV
+function show(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// DAY ACCORDION
+function toggleDay(card) {
+  const wasOpen = card.classList.contains('open');
+  document.querySelectorAll('.day-card').forEach(c => c.classList.remove('open'));
+  if (!wasOpen) card.classList.add('open');
+}
+
+// RECIPE ACCORDION
+function toggleRc(card) {
+  const wasOpen = card.classList.contains('open');
+  document.querySelectorAll('.rc').forEach(c => c.classList.remove('open'));
+  if (!wasOpen) card.classList.add('open');
+}
+
+// EXERCISE CHECKBOX
+function chk(e, el) {
+  e.stopPropagation();
+  el.classList.toggle('done');
+
+  // Check if all boxes in this day are done — emotional peak
+  const dayCard = el.closest('.day-card');
+  const allBoxes = dayCard.querySelectorAll('.chk');
+  const doneBoxes = dayCard.querySelectorAll('.chk.done');
+
+  if (allBoxes.length > 0 && allBoxes.length === doneBoxes.length) {
+    const flash = dayCard.querySelector('.pr-flash');
+    if (flash) {
+      flash.classList.add('visible');
+      setTimeout(() => flash.classList.remove('visible'), 4000);
+    }
+  }
+}
+
+// SLIDER
+function updateSlider(id, val) {
+  const el = document.getElementById(id);
+  const num = parseInt(val);
+  el.textContent = val;
+  // Color feedback: low = muted, high = gold
+  if (num >= 8) el.style.color = 'var(--gold)';
+  else if (num >= 5) el.style.color = 'var(--white)';
+  else el.style.color = 'var(--red)';
+}
+
+// PROGRESS BAR ANIMATION
+function animateBars() {
+  document.querySelectorAll('.prog-fill').forEach(bar => {
+    const target = bar.style.width;
+    bar.style.width = '0';
+    requestAnimationFrame(() => {
+      setTimeout(() => { bar.style.width = target; }, 50);
+    });
+  });
+}
+
+// SUBMIT CHECK-IN
+function submitCI() {
+  document.getElementById('ci-form-wrap').style.display = 'none';
+  const done = document.getElementById('ci-done');
+  done.classList.add('visible');
+}
+
+// Re-animate bars when switching to home
+document.querySelectorAll('.nb').forEach(btn => {
+  btn.addEventListener('click', () => {
+    setTimeout(animateBars, 100);
+  });
+});
+</script>
+
+</body>
+</html>
